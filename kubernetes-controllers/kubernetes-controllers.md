@@ -12,6 +12,6 @@
 Для работы приложения необходимо интернет соединение.
 
 ```bash
-kubectl apply -f kubernetes-intro/namespace.yaml
-kubectl apply -f kubernetes-intro/deployment.yaml
+kubectl apply -f kubernetes-controllers/namespace.yaml
+kubectl apply -f kubernetes-controllers/deployment.yaml
 ```
