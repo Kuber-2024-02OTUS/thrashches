@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: homework
+  labels:
+    app: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      volumes:
+        - name: app-volume
+          emptyDir: { }
+        - name: config-volume
+          configMap:
+            name: nginx-config
+      initContainers:
+        - name: init
+          image: alpine/git
+          command:
+            [ "git", "clone", "https://github.com/thrashches/design_studio.git", "/init" ]
+          volumeMounts:
+            - mountPath: /init
+              name: app-volume
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - mountPath: /homework
+              name: app-volume
+            - mountPath: /etc/nginx/conf.d
+              name: config-volume
+          readinessProbe:
+            httpGet:
+              port: 8000
+              path: '/index.html'
+
+          lifecycle:
+            preStop:
+              exec:
+                command: [ "rm", "-rf", "/homework/*" ]
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: homework
+data:
+  nginx.conf: |
+    server {
+      listen 8000;
+      location / {
+        try_files $uri $uri/ /index.html;
+        root /homework;
+        index  index.html index.htm;
+      }
+    }
