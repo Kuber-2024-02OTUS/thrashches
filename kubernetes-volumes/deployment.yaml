@@ -6,7 +6,7 @@ metadata:
   labels:
     app: web
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: web
@@ -25,11 +25,14 @@ spec:
         - name: custom-config
           configMap:
             name: custom-config
+
       initContainers:
         - name: init
           image: alpine/git
           command:
-            [ "git", "clone", "https://github.com/thrashches/design_studio.git", "/init" ]
+            - "/bin/sh"
+            - "-c"
+            - "rm -rf /init/* && git clone https://github.com/thrashches/design_studio.git /init"
           volumeMounts:
             - mountPath: /init
               name: app-volume
@@ -70,9 +73,13 @@ data:
   nginx.conf: |
     server {
       listen 8000;
+      location /conf/file {
+        alias /homework/conf;
+      }
       location / {
         try_files $uri $uri/ /index.html;
         root /homework;
         index  index.html index.htm;
       }
+      
     }
